@@ -1,0 +1,29 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --accent-color: #0078d7;
+}
+
+.metro-tile {
+  transition: transform 0.14s cubic-bezier(0.22, 1, 0.36, 1), filter 0.15s ease;
+}
+
+.metro-tile:active {
+  transform: scale(0.95);
+  filter: brightness(0.9);
+}
+
+@keyframes pulse-arrow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+.animate-arrow {
+  animation: pulse-arrow 1.2s ease-in-out infinite;
+}

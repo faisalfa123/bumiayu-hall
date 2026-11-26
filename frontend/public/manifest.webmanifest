@@ -1,0 +1,9 @@
+{
+  "name": "Bumiayu Hall",
+  "short_name": "Bumiayu",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0c",
+  "theme_color": "#0078D7",
+  "orientation": "portrait-primary"
+}

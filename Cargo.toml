@@ -1,0 +1,19 @@
+[package]
+name = "bumiayu-hall"
+version = "0.1.0"
+edition = "2021"
+description = "Lightweight Windows Mobile-style web app launcher with seamless same-origin reverse proxy for ARM64 & cross-platform"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+rust-embed = "8"
+mime_guess = "2"
+tower-http = { version = "0.6", features = ["cors"] }
+tracing = "0.1"
+tracing-subscriber = "0.3"
+local-ip-address = "0.6"

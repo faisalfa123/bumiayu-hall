@@ -1,0 +1,128 @@
+use serde::Serialize;
+use std::net::TcpStream;
+use std::process::Command;
+use std::time::Duration;
+
+#[derive(Debug, Serialize)]
+pub struct SystemInfo {
+    pub version: String,
+    pub active_port: u16,
+    pub lan_ip: Option<String>,
+    pub tailscale_ip: Option<String>,
+    pub tailscale_dns: Option<String>,
+    pub detected_web_servers: Vec<String>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct DiscoveredApp {
+    pub name: String,
+    pub slug: String,
+    pub port: u16,
+    pub target_url: String,
+    pub icon: String,
+    pub source: String,
+}
+
+pub fn gather_system_info(active_port: u16, version: &str) -> SystemInfo {
+    let lan_ip = local_ip_address::local_ip().ok().map(|ip| ip.to_string());
+    let (tailscale_ip, tailscale_dns) = detect_tailscale();
+    let detected_web_servers = detect_web_servers();
+
+    SystemInfo {
+        version: version.to_string(),
+        active_port,
+        lan_ip,
+        tailscale_ip,
+        tailscale_dns,
+        detected_web_servers,
+    }
+}
+
+fn detect_tailscale() -> (Option<String>, Option<String>) {
+    let ip = Command::new("tailscale")
+        .args(["ip", "-4"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                String::from_utf8(o.stdout)
+                    .ok()
+                    .map(|s| s.lines().next().unwrap_or("").trim().to_string())
+                    .filter(|s| !s.is_empty())
+            } else {
+                None
+            }
+        });
+
+    let dns = Command::new("tailscale")
+        .args(["status", "--json"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                serde_json::from_slice::<serde_json::Value>(&o.stdout)
+                    .ok()
+                    .and_then(|v| {
+                        v.get("Self")
+                            .and_then(|s| s.get("DNSName"))
+                            .and_then(|d| d.as_str())
+                            .map(|s| s.trim_end_matches('.').to_string())
+                    })
+            } else {
+                None
+            }
+        });
+
+    (ip, dns)
+}
+
+fn detect_web_servers() -> Vec<String> {
+    let candidates = ["apache2", "httpd", "nginx", "caddy"];
+    let mut found = Vec::new();
+    for bin in candidates {
+        let ok = Command::new(bin)
+            .arg("-v")
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
+        if ok {
+            found.push(bin.to_string());
+        }
+    }
+    found
+}
+
+pub fn discover_local_apps(active_port: u16) -> Vec<DiscoveredApp> {
+    let known_ports: Vec<(u16, &str, &str, &str)> = vec![
+        (3000, "Mastermind / Grafana", "mastermind", "brain"),
+        (3001, "AdGuard Home", "adguard", "shield"),
+        (5000, "Mastermind API / Flask", "mastermind-api", "cpu"),
+        (8000, "Mastermind / Portainer Agent", "mastermind-8000", "terminal"),
+        (8080, "Mastermind / Web Service", "app-8080", "globe"),
+        (8096, "Jellyfin", "jellyfin", "film"),
+        (8123, "Home Assistant", "homeassistant", "home"),
+        (9000, "Portainer", "portainer", "box"),
+        (9090, "Cockpit / Prometheus", "cockpit", "activity"),
+    ];
+
+    let mut apps = Vec::new();
+    for (port, name, slug, icon) in known_ports {
+        if port == active_port {
+            continue;
+        }
+        let addr = format!("127.0.0.1:{}", port);
+        if let Ok(sock) = addr.parse() {
+            if TcpStream::connect_timeout(&sock, Duration::from_millis(80)).is_ok() {
+                apps.push(DiscoveredApp {
+                    name: name.to_string(),
+                    slug: slug.to_string(),
+                    port,
+                    target_url: format!("http://127.0.0.1:{}", port),
+                    icon: icon.to_string(),
+                    source: "Local Port Scan".to_string(),
+                });
+            }
+        }
+    }
+    apps
+}
