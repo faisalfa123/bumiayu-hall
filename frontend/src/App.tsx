@@ -154,57 +154,74 @@ export default function App() {
   const cardClass = darkMode ? 'bg-[#16181d] border-white/10' : 'bg-white border-slate-200 shadow-sm';
 
   return (
-    <div className={`min-h-screen ${bgClass} px-4 pt-5 pb-24 max-w-md mx-auto transition-colors`}>
-      {/* Header: Greeting + User Avatar (Top Right) */}
-      <header className="flex items-center justify-between mb-5">
-        <div>
-          <p className="text-xs opacity-60">Selamat Datang!</p>
-          <h1 className="text-xl font-bold tracking-tight flex items-center gap-2">
-            {isAdmin ? 'Admin Mode' : userName}
+    <div className={`min-h-screen ${bgClass} px-4 pt-3 pb-24 max-w-md mx-auto transition-colors`}>
+      {/* Compact Top Bar Header */}
+      <header className="flex items-center justify-between py-2 mb-3">
+        <div className="min-w-0">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] opacity-60">Hai,</span>
+            <h1 className="text-base font-bold tracking-tight truncate">
+              {isAdmin ? 'Admin' : userName}
+            </h1>
             {isAdmin && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono">
+              <span className="text-[9px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 font-mono">
                 ADMIN
               </span>
             )}
-          </h1>
-          <div id="system-status-bar" className="flex items-center gap-1.5 mt-0.5 text-[10px] opacity-60 font-mono">
-            <span className="text-emerald-400">Port {systemInfo?.active_port ?? 1001}</span>
+          </div>
+          <div id="system-status-bar" className="flex items-center gap-1.5 text-[10px] opacity-60 font-mono truncate">
+            <span className="text-emerald-400">:{systemInfo?.active_port ?? 1001}</span>
             <span>·</span>
-            <span>{systemInfo?.tailscale_ip || systemInfo?.lan_ip || window.location.hostname}</span>
+            <span className="truncate">{systemInfo?.tailscale_ip || systemInfo?.lan_ip || window.location.hostname}</span>
           </div>
         </div>
 
         <button
           onClick={() => (isAdmin ? setSettingsOpen(true) : setUserSettingsOpen(true))}
-          className="w-11 h-11 rounded-full overflow-hidden border-2 border-amber-400/80 bg-white/10 flex items-center justify-center shrink-0"
+          className="w-9 h-9 rounded-full overflow-hidden border-2 border-amber-400/80 bg-white/10 flex items-center justify-center shrink-0 active:scale-95 transition-transform duration-100"
           aria-label="Profil Pengguna"
         >
           {avatarUrl ? (
             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
           ) : (
-            <User className="w-5 h-5 opacity-80" />
+            <User className="w-4 h-4 opacity-80" />
           )}
         </button>
       </header>
 
       {activeTab === 'home' && (
         <>
-          {/* Top 2 Cards: Weather & System Load % */}
-          <div className="grid grid-cols-2 gap-3 mb-5">
-            <div className={`p-3.5 rounded-2xl border ${cardClass} flex items-center justify-between`}>
-              <div>
-                <div className="text-xl font-bold">30°C</div>
-                <div className="text-[11px] opacity-60">Cuaca Hari Ini</div>
+          {/* System Status Summary Widget */}
+          <div className={`p-2.5 rounded-xl border ${cardClass} mb-3 flex items-center justify-between gap-3`}>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between text-[10px] mb-1">
+                <span className="opacity-60">CPU</span>
+                <span className="font-mono font-semibold">{stats ? `${stats.cpu_percent.toFixed(0)}%` : '--%'}</span>
               </div>
-              <Sun className="w-8 h-8 text-amber-400" />
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-sky-400 transition-all duration-300"
+                  style={{ width: `${Math.min(100, stats?.cpu_percent ?? 0)}%` }}
+                />
+              </div>
             </div>
 
-            <div className={`p-3.5 rounded-2xl border ${cardClass} flex items-center justify-between`}>
-              <div>
-                <div className="text-xl font-bold">{stats ? `${stats.cpu_percent.toFixed(0)}%` : '--%'}</div>
-                <div className="text-[11px] opacity-60">Load Sistem</div>
+            <div className="flex-1 min-w-0">
+              <div className="flex justify-between text-[10px] mb-1">
+                <span className="opacity-60">RAM</span>
+                <span className="font-mono font-semibold">{stats ? `${stats.ram_percent.toFixed(0)}%` : '--%'}</span>
               </div>
-              <Cpu className="w-8 h-8 text-sky-400" />
+              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full bg-emerald-400 transition-all duration-300"
+                  style={{ width: `${Math.min(100, stats?.ram_percent ?? 0)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center gap-1 pl-2 border-l border-white/10 shrink-0">
+              <Sun className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-bold">30°C</span>
             </div>
           </div>
 
@@ -249,14 +266,13 @@ export default function App() {
             <div className="flex items-center justify-between text-xs font-semibold opacity-70">
               <span>Aplikasi ({filteredTiles.length})</span>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {filteredTiles.map((tile) => (
                 <AppTileCard
                   key={tile.id}
                   tile={tile}
                   isAdmin={isAdmin}
                   isEnabled={serviceStates[tile.slug] ?? true}
-                  cardClass={cardClass}
                   onToggleService={(slug, next) => {
                     setServiceStates((prev) => ({ ...prev, [slug]: next }));
                     toggleService(slug, next);
