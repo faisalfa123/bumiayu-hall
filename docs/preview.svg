@@ -1,41 +1,69 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 760" width="390" height="760">
   <rect width="390" height="760" rx="36" fill="#0a0a0c" stroke="#2a2d35" stroke-width="4"/>
-  <!-- Status Header -->
-  <text x="24" y="64" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="26" font-weight="300">Bumiayu Hall</text>
-  <rect x="24" y="78" width="74" height="22" rx="4" fill="#1e222a"/>
-  <text x="34" y="93" fill="#34d399" font-family="monospace" font-size="11">Port 1001</text>
-  <text x="106" y="93" fill="#9ca3af" font-family="monospace" font-size="11">100.64.0.12</text>
-  <rect x="190" y="78" width="60" height="22" rx="4" fill="#0ea5e9" fill-opacity="0.2"/>
-  <text x="198" y="93" fill="#7dd3fc" font-family="monospace" font-size="11">Tailscale</text>
+  <!-- Header: Greeting + User Avatar -->
+  <text x="24" y="52" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="12">Selamat Datang!</text>
+  <text x="24" y="76" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="22" font-weight="700">Pengguna</text>
+  <text x="24" y="94" fill="#34d399" font-family="monospace" font-size="10">Port 1001 · 100.64.0.12</text>
+  <circle cx="344" cy="66" r="22" fill="#1e222a" stroke="#fbbf24" stroke-width="2"/>
+  <circle cx="344" cy="60" r="6" fill="#9ca3af"/>
+  <path d="M332 76 c2-6 22-6 24 0" fill="#9ca3af"/>
 
-  <!-- Metro Tiles Grid -->
-  <!-- Wide Tile: Mastermind -->
-  <rect x="24" y="120" width="342" height="160" fill="#0078D7"/>
-  <text x="38" y="142" fill="#ffffff" fill-opacity="0.75" font-family="Segoe UI, sans-serif" font-size="10" font-weight="600">CORE</text>
-  <circle cx="195" cy="195" r="24" fill="none" stroke="#ffffff" stroke-width="2.5"/>
-  <text x="38" y="264" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="15" font-weight="600">Mastermind</text>
+  <!-- Top 2 Info Cards: Weather & System Load % -->
+  <rect x="24" y="114" width="165" height="74" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <text x="38" y="144" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="20" font-weight="700">30°C</text>
+  <text x="38" y="164" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="11">Cuaca Hari Ini</text>
+  <circle cx="158" cy="150" r="14" fill="#fbbf24" fill-opacity="0.25"/>
+  <circle cx="158" cy="150" r="8" fill="#fbbf24"/>
 
-  <!-- Medium Tile: Portainer -->
-  <rect x="24" y="292" width="165" height="165" fill="#107C10"/>
-  <text x="38" y="314" fill="#ffffff" fill-opacity="0.75" font-family="Segoe UI, sans-serif" font-size="10" font-weight="600">SYSTEM</text>
-  <rect x="86" y="352" width="40" height="40" rx="4" fill="none" stroke="#ffffff" stroke-width="2.5"/>
-  <text x="38" y="441" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">Portainer</text>
+  <rect x="201" y="114" width="165" height="74" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <text x="215" y="144" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="20" font-weight="700">24%</text>
+  <text x="215" y="164" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="11">Load Sistem</text>
+  <rect x="326" y="138" width="22" height="22" rx="4" fill="#38bdf8" fill-opacity="0.2" stroke="#38bdf8" stroke-width="1.5"/>
 
-  <!-- Small Tiles: AdGuard & Jellyfin -->
-  <rect x="201" y="292" width="77" height="77" fill="#68217A"/>
-  <text x="210" y="358" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">AdGuard</text>
+  <!-- Search Bar -->
+  <rect x="24" y="204" width="342" height="40" rx="12" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <text x="44" y="229" fill="#6b7280" font-family="Segoe UI, sans-serif" font-size="13">Cari aplikasi...</text>
 
-  <rect x="289" y="292" width="77" height="77" fill="#D83B01"/>
-  <text x="298" y="358" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Jellyfin</text>
+  <!-- App Grid (2 Columns) -->
+  <text x="24" y="272" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600">Aplikasi (4)</text>
 
-  <!-- Medium Tile: Home Assistant -->
-  <rect x="201" y="380" width="165" height="77" fill="#038387"/>
-  <text x="215" y="442" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="13" font-weight="600">Home Assistant</text>
+  <!-- Card 1: Mastermind -->
+  <rect x="24" y="286" width="165" height="145" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <rect x="38" y="300" width="36" height="36" rx="10" fill="#0078D7"/>
+  <text x="38" y="360" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">Mastermind</text>
+  <text x="38" y="376" fill="#6b7280" font-family="Segoe UI, sans-serif" font-size="11">Core</text>
+  <rect x="38" y="392" width="137" height="26" rx="8" fill="#0284c7"/>
+  <text x="106" y="409" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Launch</text>
 
-  <!-- Mobile Bottom Bar (Thumb Zone) -->
+  <!-- Card 2: Portainer -->
+  <rect x="201" y="286" width="165" height="145" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <rect x="215" y="300" width="36" height="36" rx="10" fill="#107C10"/>
+  <text x="215" y="360" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">Portainer</text>
+  <text x="215" y="376" fill="#6b7280" font-family="Segoe UI, sans-serif" font-size="11">System</text>
+  <rect x="215" y="392" width="137" height="26" rx="8" fill="#0284c7"/>
+  <text x="283" y="409" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Launch</text>
+
+  <!-- Card 3: AdGuard -->
+  <rect x="24" y="445" width="165" height="145" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <rect x="38" y="459" width="36" height="36" rx="10" fill="#68217A"/>
+  <text x="38" y="519" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">AdGuard Home</text>
+  <text x="38" y="535" fill="#6b7280" font-family="Segoe UI, sans-serif" font-size="11">Network</text>
+  <rect x="38" y="551" width="137" height="26" rx="8" fill="#0284c7"/>
+  <text x="106" y="568" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Launch</text>
+
+  <!-- Card 4: Jellyfin -->
+  <rect x="201" y="445" width="165" height="145" rx="16" fill="#16181d" stroke="#262932" stroke-width="1"/>
+  <rect x="215" y="459" width="36" height="36" rx="10" fill="#D83B01"/>
+  <text x="215" y="519" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600">Jellyfin</text>
+  <text x="215" y="535" fill="#6b7280" font-family="Segoe UI, sans-serif" font-size="11">Media</text>
+  <rect x="215" y="551" width="137" height="26" rx="8" fill="#0284c7"/>
+  <text x="283" y="568" text-anchor="middle" fill="#ffffff" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Launch</text>
+
+  <!-- Bottom Bar (4 Icons, No Center Plus) -->
   <rect x="2" y="690" width="386" height="68" rx="20" fill="#121418"/>
   <line x1="2" y1="690" x2="388" y2="690" stroke="#2a2d35" stroke-width="1"/>
-  <text x="68" y="730" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="12">Cari</text>
-  <text x="175" y="730" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="12">Refresh</text>
-  <text x="285" y="730" fill="#38bdf8" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600">Pengaturan</text>
+  <text x="52" y="730" text-anchor="middle" fill="#38bdf8" font-family="Segoe UI, sans-serif" font-size="11" font-weight="600">Home</text>
+  <text x="148" y="730" text-anchor="middle" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="11">Performa</text>
+  <text x="242" y="730" text-anchor="middle" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="11">3D</text>
+  <text x="336" y="730" text-anchor="middle" fill="#9ca3af" font-family="Segoe UI, sans-serif" font-size="11">Pengaturan</text>
 </svg>
