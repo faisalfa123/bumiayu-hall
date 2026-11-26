@@ -36,10 +36,20 @@ export interface DiscoveredApp {
   source: string;
 }
 
+export interface DiskInfo {
+  mount: string;
+  used_gb: number;
+  total_gb: number;
+}
+
 export interface SystemStats {
   cpu_percent: number;
   ram_used_mb: number;
   ram_total_mb: number;
   ram_percent: number;
   uptime_hours: number;
+  hostname?: string;
+  os_name?: string;
+  disks?: DiskInfo[];
+  interfaces?: string[];
 }

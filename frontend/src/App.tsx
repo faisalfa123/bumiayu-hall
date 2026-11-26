@@ -25,7 +25,7 @@ const Office3DView = lazy(() =>
   import('./components/Office3DView').then((m) => ({ default: m.Office3DView }))
 );
 
-type BottomTab = 'home' | 'perf' | 'space3d';
+type BottomTab = 'home' | 'perf' | 'space3d' | 'appmgr';
 
 export default function App() {
   const [config, setConfig] = useState<AppConfig | null>(null);
@@ -40,6 +40,7 @@ export default function App() {
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('bumiayu_theme') !== 'light');
 
   const [activeTab, setActiveTab] = useState<BottomTab>('home');
+  const [serviceStates, setServiceStates] = useState<Record<string, boolean>>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [userSettingsOpen, setUserSettingsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -259,11 +260,22 @@ export default function App() {
                     </div>
                     {isAdmin && (
                       <button
-                        onClick={() => toggleService(tile.slug, true)}
-                        className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold"
+                        onClick={() => {
+                          const next = !(serviceStates[tile.slug] ?? true);
+                          setServiceStates((prev) => ({ ...prev, [tile.slug]: next }));
+                          toggleService(tile.slug, next);
+                        }}
+                        className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${
+                          (serviceStates[tile.slug] ?? true) ? 'bg-emerald-500' : 'bg-white/20'
+                        }`}
                         title="On/Off Service"
+                        aria-label="Toggle Service"
                       >
-                        ON/OFF
+                        <span
+                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
+                            (serviceStates[tile.slug] ?? true) ? 'translate-x-5' : 'translate-x-0'
+                          }`}
+                        />
                       </button>
                     )}
                   </div>
@@ -287,32 +299,95 @@ export default function App() {
       )}
 
       {activeTab === 'perf' && (
-        <div className={`p-4 rounded-2xl border ${cardClass} space-y-3`}>
-          <h2 className="text-base font-bold">Detail Performa Server</h2>
-          <div className="space-y-2 text-xs">
-            <div className="flex justify-between">
-              <span className="opacity-60">CPU Load</span>
-              <span className="font-mono font-semibold">{stats ? `${stats.cpu_percent.toFixed(1)}%` : '-'}</span>
+        <div className="space-y-3 animate-fade-up">
+          <h2 className="text-base font-bold">Performa & Kondisi Server</h2>
+          <div className="grid grid-cols-2 gap-3">
+            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
+              <div className="text-[11px] opacity-60">HW Info & Kondisi</div>
+              <div className="text-sm font-bold mt-1">{stats?.hostname ?? 'Server'}</div>
+              <div className="text-[11px] opacity-70">{stats?.os_name ?? 'Linux'} · Up {stats?.uptime_hours ?? 0}j</div>
             </div>
-            <div className="flex justify-between">
-              <span className="opacity-60">RAM Terpakai</span>
-              <span className="font-mono font-semibold">
-                {stats ? `${stats.ram_used_mb} MB / ${stats.ram_total_mb} MB (${stats.ram_percent.toFixed(0)}%)` : '-'}
-              </span>
+            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
+              <div className="text-[11px] opacity-60">CPU & RAM</div>
+              <div className="text-sm font-bold mt-1">{stats ? `${stats.cpu_percent.toFixed(1)}% CPU` : '-'}</div>
+              <div className="text-[11px] opacity-70">
+                {stats ? `${stats.ram_used_mb}/${stats.ram_total_mb} MB (${stats.ram_percent.toFixed(0)}%)` : '-'}
+              </div>
             </div>
-            <div className="flex justify-between">
-              <span className="opacity-60">Uptime</span>
-              <span className="font-mono font-semibold">{stats ? `${stats.uptime_hours} jam` : '-'}</span>
+            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
+              <div className="text-[11px] opacity-60">WiFi / Ethernet</div>
+              <div className="text-xs font-mono mt-1 truncate">
+                {stats?.interfaces?.length ? stats.interfaces.join(', ') : 'eth0 / wlan0'}
+              </div>
+              <div className="text-[11px] text-emerald-400 mt-0.5">
+                {systemInfo?.tailscale_ip || systemInfo?.lan_ip || 'Connected'}
+              </div>
+            </div>
+            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
+              <div className="text-[11px] opacity-60">Mounting / Disk</div>
+              {stats?.disks?.slice(0, 2).map((d) => (
+                <div key={d.mount} className="text-[11px] font-mono mt-0.5 truncate">
+                  {d.mount}: {d.used_gb.toFixed(1)}/{d.total_gb.toFixed(0)} GB
+                </div>
+              ))}
             </div>
           </div>
+
           {isAdmin && (
-            <button
-              onClick={() => handleServerAction('restart-services')}
-              className="w-full mt-2 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold"
-            >
-              Atur Sistem (Butuh Sandi Root)
-            </button>
+            <div className={`p-3.5 rounded-2xl border ${cardClass} space-y-2`}>
+              <div className="text-xs font-semibold opacity-75">Kontrol Power Server (Sandi Root)</div>
+              <div className="grid grid-cols-3 gap-2">
+                <button
+                  onClick={() => handleServerAction('start-services')}
+                  className="py-2 rounded-xl bg-emerald-600/80 hover:bg-emerald-500 text-white text-xs font-semibold"
+                >
+                  Start
+                </button>
+                <button
+                  onClick={() => handleServerAction('reboot')}
+                  className="py-2 rounded-xl bg-amber-600/80 hover:bg-amber-500 text-white text-xs font-semibold"
+                >
+                  Restart
+                </button>
+                <button
+                  onClick={() => handleServerAction('poweroff')}
+                  className="py-2 rounded-xl bg-red-600/80 hover:bg-red-500 text-white text-xs font-semibold"
+                >
+                  Poweroff
+                </button>
+              </div>
+            </div>
           )}
+        </div>
+      )}
+
+      {activeTab === 'appmgr' && isAdmin && (
+        <div className={`p-4 rounded-2xl border ${cardClass} space-y-3 animate-fade-up`}>
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-bold">App Manager (Inline)</h2>
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="text-xs px-3 py-1 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-semibold"
+            >
+              + Scan / Tambah
+            </button>
+          </div>
+          <p className="text-xs opacity-60">
+            Kelola aplikasi yang terdeteksi di server Anda langsung dari tab ini.
+          </p>
+          <div className="space-y-2">
+            {config?.tiles.map((t) => (
+              <div key={t.id} className="flex items-center justify-between p-2.5 rounded-xl bg-black/20 border border-white/10">
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{t.name}</div>
+                  <div className="text-[11px] opacity-50 truncate">/p/{t.slug}/ → {t.target_url}</div>
+                </div>
+                <a href={`/p/${t.slug}/`} className="px-2.5 py-1 rounded bg-sky-600 text-white text-xs font-semibold">
+                  Buka
+                </a>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
@@ -351,8 +426,8 @@ export default function App() {
 
           {isAdmin ? (
             <button
-              onClick={() => setSettingsOpen(true)}
-              className="flex flex-col items-center gap-0.5 text-[10px] opacity-60 hover:text-sky-400"
+              onClick={() => setActiveTab('appmgr')}
+              className={`flex flex-col items-center gap-0.5 text-[10px] ${activeTab === 'appmgr' ? 'text-sky-400' : 'opacity-60'}`}
             >
               <Rocket className="w-5 h-5" />
               <span>App Mgr</span>
@@ -427,6 +502,18 @@ export default function App() {
                 placeholder="https://..."
                 className="w-full px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-sm"
               />
+            </div>
+
+            <div className="pt-2">
+              <button
+                onClick={() => {
+                  setUserSettingsOpen(false);
+                  setGuideOpen(true);
+                }}
+                className="w-full py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs font-semibold"
+              >
+                Ulangi Panduan (Tutorial)
+              </button>
             </div>
 
             {/* Hidden Admin Access inside About Section */}

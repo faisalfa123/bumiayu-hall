@@ -12,7 +12,8 @@ echo -e "\033[1;36m╔═══════════════════�
 echo -e "\033[1;36m║       Bumiayu Hall — Installer TUI           ║\033[0m"
 echo -e "\033[1;36m╚══════════════════════════════════════════════╝\033[0m"
 
-echo "[1/3] Mengunduh $BIN_NAME..."
+echo "[1/3] Menghentikan service lama & mengunduh $BIN_NAME..."
+sudo systemctl stop bumiayu-hall 2>/dev/null || true
 sudo curl -fsSL "https://github.com/faisalfa123/bumiayu-hall/releases/latest/download/$BIN_NAME" -o /usr/local/bin/bumiayu-hall
 sudo chmod +x /usr/local/bin/bumiayu-hall
 sudo mkdir -p /etc/bumiayu-hall

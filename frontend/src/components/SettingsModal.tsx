@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Copy, Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
+import { Plus, RefreshCw, Save, Trash2, X } from 'lucide-react';
 import { AppConfig, DiscoveredApp, SystemInfo, TileItem, TileSize } from '../types';
 
 interface SettingsModalProps {
@@ -33,7 +33,6 @@ export function SettingsModal({
   const [yamlText, setYamlText] = useState('');
   const [discovered, setDiscovered] = useState<DiscoveredApp[]>([]);
   const [scanning, setScanning] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
   const [pwdRole, setPwdRole] = useState<'admin' | 'root'>('admin');
   const [curPwd, setCurPwd] = useState('');
@@ -117,19 +116,6 @@ export function SettingsModal({
     } else {
       setStatusMsg(await res.text());
     }
-  };
-
-  const mastermindPrompt = `Tolong periksa project Mastermind agar bisa terintegrasi penuh dengan Bumiayu Hall (port ${systemInfo?.active_port ?? 1001}):
-1. Sediakan endpoint GET /api/apps yang mengembalikan JSON array daftar aplikasi terinstall:
-   [{ "name": "Nama App", "slug": "nama-app", "port": 8080, "icon": "globe" }]
-2. Pastikan aplikasi tidak memblokir proxy/embedding dengan menghapus atau melonggarkan header X-Frame-Options dan Content-Security-Policy frame-ancestors.
-3. Gunakan relative path untuk aset JS/CSS dan API call agar berjalan mulus di subpath /p/mastermind/.
-4. Aktifkan CORS untuk origin ${window.location.origin} jika diperlukan.`;
-
-  const copyPrompt = () => {
-    navigator.clipboard.writeText(mastermindPrompt);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
@@ -356,25 +342,7 @@ export function SettingsModal({
                     Masuk ke User Mode
                   </button>
                 )}
-              </div>
-
-              <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="font-semibold text-sm text-white">Prompt untuk Mastermind (Antigravity IDE)</div>
-                  <button
-                    onClick={copyPrompt}
-                    className="flex items-center gap-1 px-2.5 py-1 rounded bg-sky-600 hover:bg-sky-500 text-[11px] font-semibold"
-                  >
-                    <Copy className="w-3 h-3" /> {copied ? 'Tersalin!' : 'Salin Prompt'}
-                  </button>
                 </div>
-                <p className="text-white/60">
-                  Jika Mastermind menolak dibuka melalui proxy Bumiayu Hall, salin prompt ini dan kirimkan ke Antigravity IDE yang mengerjakan Mastermind:
-                </p>
-                <pre className="p-2.5 rounded bg-black/50 border border-white/10 text-[11px] text-white/80 whitespace-pre-wrap font-mono">
-                  {mastermindPrompt}
-                </pre>
-              </div>
             </div>
           )}
         </div>

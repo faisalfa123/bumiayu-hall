@@ -3,7 +3,14 @@ use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
 use std::process::Command;
 use std::time::Duration;
-use sysinfo::System;
+use sysinfo::{Disks, Networks, System};
+
+#[derive(Debug, Serialize)]
+pub struct DiskInfo {
+    pub mount: String,
+    pub used_gb: f64,
+    pub total_gb: f64,
+}
 
 #[derive(Debug, Serialize)]
 pub struct SystemStats {
@@ -12,6 +19,10 @@ pub struct SystemStats {
     pub ram_total_mb: u64,
     pub ram_percent: f32,
     pub uptime_hours: u64,
+    pub hostname: String,
+    pub os_name: String,
+    pub disks: Vec<DiskInfo>,
+    pub interfaces: Vec<String>,
 }
 
 pub fn gather_system_stats() -> SystemStats {
@@ -22,6 +33,22 @@ pub fn gather_system_stats() -> SystemStats {
     let ram_total_mb = (sys.total_memory() / (1024 * 1024)).max(1);
     let ram_percent = (ram_used_mb as f32 / ram_total_mb as f32) * 100.0;
     let uptime_hours = System::uptime() / 3600;
+    let hostname = System::host_name().unwrap_or_else(|| "Server".to_string());
+    let os_name = System::name().unwrap_or_else(|| "Linux".to_string());
+
+    let disks = Disks::new_with_refreshed_list()
+        .iter()
+        .map(|d| DiskInfo {
+            mount: d.mount_point().to_string_lossy().to_string(),
+            used_gb: ((d.total_space() - d.available_space()) as f64) / 1_073_741_824.0,
+            total_gb: (d.total_space() as f64) / 1_073_741_824.0,
+        })
+        .collect();
+
+    let interfaces = Networks::new_with_refreshed_list()
+        .iter()
+        .map(|(name, _)| name.clone())
+        .collect();
 
     SystemStats {
         cpu_percent,
@@ -29,6 +56,10 @@ pub fn gather_system_stats() -> SystemStats {
         ram_total_mb,
         ram_percent,
         uptime_hours,
+        hostname,
+        os_name,
+        disks,
+        interfaces,
     }
 }
 
