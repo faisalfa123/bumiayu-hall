@@ -5,21 +5,21 @@ use std::process::Command;
 use std::time::Duration;
 use sysinfo::{Disks, Networks, System};
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct DiskInfo {
     pub mount: String,
     pub used_gb: f64,
     pub total_gb: f64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProcessInfo {
     pub name: String,
     pub cpu_percent: f32,
     pub memory_mb: u64,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SystemStats {
     pub cpu_percent: f32,
     pub cpu_temp_c: Option<f32>,
@@ -102,7 +102,7 @@ struct MastermindAppItem {
     icon: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Clone, Serialize)]
 pub struct SystemInfo {
     pub version: String,
     pub active_port: u16,

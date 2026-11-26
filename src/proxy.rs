@@ -10,11 +10,21 @@ use tokio::sync::RwLock;
 
 use crate::auth::SecretsConfig;
 use crate::config::AppConfig;
+use crate::discovery::{SystemInfo, SystemStats};
+use std::collections::HashMap;
+
+#[derive(Clone, Debug, Default)]
+pub struct CachedTelemetry {
+    pub stats: Option<SystemStats>,
+    pub info: Option<SystemInfo>,
+    pub tile_health: HashMap<String, bool>,
+}
 
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<RwLock<AppConfig>>,
     pub secrets: Arc<RwLock<SecretsConfig>>,
+    pub cache: Arc<RwLock<CachedTelemetry>>,
     pub config_path: String,
     pub active_port: u16,
     pub version: String,

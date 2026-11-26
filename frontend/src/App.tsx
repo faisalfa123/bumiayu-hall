@@ -438,9 +438,9 @@ export default function App() {
         </Suspense>
       )}
 
-      {/* Bottom Bar (4 Icons, No Center Plus) */}
+      {/* Bottom Bar (4 Icons, Mobile Only sm:hidden) */}
       <nav
-        className={`fixed bottom-0 inset-x-0 z-30 border-t ${
+        className={`sm:hidden fixed bottom-0 inset-x-0 z-30 border-t ${
           darkMode ? 'bg-[#121418]/95 border-white/10' : 'bg-white/95 border-slate-200'
         } backdrop-blur-md pb-[env(safe-area-inset-bottom)]`}
       >

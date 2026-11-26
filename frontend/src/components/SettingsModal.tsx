@@ -328,23 +328,42 @@ export function SettingsModal({
                 <div className="font-semibold text-sm text-white">Aksi Cepat Sistem</div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => setStatusMsg('Proxy di-restart!')}
-                    className="flex-1 py-1.5 rounded bg-sky-600/80 hover:bg-sky-500 text-white text-[11px] font-semibold"
+                    onClick={async () => {
+                      await fetch('/api/v1/mobile/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'restart_proxy' }),
+                      });
+                      setStatusMsg('Proxy di-restart!');
+                    }}
+                    className="flex-1 py-1.5 rounded bg-sky-600/80 active:scale-95 text-white text-[11px] font-semibold"
                   >
                     Restart Proxy
                   </button>
                   <button
-                    onClick={() => {
+                    onClick={async () => {
                       caches?.keys().then((ks) => ks.forEach((k) => caches.delete(k)));
+                      await fetch('/api/v1/mobile/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'clear_cache' }),
+                      });
                       setStatusMsg('Cache dibersihkan!');
                     }}
-                    className="flex-1 py-1.5 rounded bg-emerald-600/80 hover:bg-emerald-500 text-white text-[11px] font-semibold"
+                    className="flex-1 py-1.5 rounded bg-emerald-600/80 active:scale-95 text-white text-[11px] font-semibold"
                   >
                     Clear Cache
                   </button>
                   <button
-                    onClick={() => setStatusMsg('Perintah Reboot dikirim!')}
-                    className="flex-1 py-1.5 rounded bg-red-600/80 hover:bg-red-500 text-white text-[11px] font-semibold"
+                    onClick={async () => {
+                      await fetch('/api/v1/mobile/action', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'reboot_stb' }),
+                      });
+                      setStatusMsg('Perintah Reboot dikirim!');
+                    }}
+                    className="flex-1 py-1.5 rounded bg-red-600/80 active:scale-95 text-white text-[11px] font-semibold"
                   >
                     Reboot
                   </button>

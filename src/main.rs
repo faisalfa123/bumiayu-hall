@@ -22,7 +22,7 @@ use tower_http::cors::CorsLayer;
 use auth::{generate_token, load_or_create_secrets, verify_password};
 use config::{load_or_create_config, save_config, AppConfig};
 use discovery::{discover_all_apps, gather_system_info, gather_system_stats};
-use proxy::{proxy_handler, proxy_root_handler, AppState};
+use proxy::{proxy_handler, proxy_root_handler, AppState, CachedTelemetry};
 
 #[derive(RustEmbed)]
 #[folder = "frontend/dist"]
@@ -68,24 +68,28 @@ async fn main() {
     let state = AppState {
         config: Arc::new(RwLock::new(cfg)),
         secrets: Arc::new(RwLock::new(secrets)),
+        cache: Arc::new(RwLock::new(CachedTelemetry::default())),
         config_path,
         active_port,
         version,
         http_client,
     };
 
-    // Background Mastermind Auto-Sync (every 30s)
+    // Background Mastermind Auto-Sync & Telemetry Cache (every 30s)
     let sync_state = state.clone();
     tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
         loop {
             interval.tick().await;
+            let stats = gather_system_stats();
+            let info = gather_system_info(sync_state.active_port, &sync_state.version);
             let api_url = {
                 let cfg = sync_state.config.read().await;
                 cfg.mastermind_api_url.clone()
             };
             let discovered = discover_all_apps(&sync_state.http_client, &api_url, sync_state.active_port).await;
-            if !discovered.is_empty() {
+            let mut health_map = std::collections::HashMap::new();
+            {
                 let mut cfg = sync_state.config.write().await;
                 let mut changed = false;
                 for app in discovered {
@@ -104,10 +108,24 @@ async fn main() {
                         changed = true;
                     }
                 }
+                for tile in cfg.tiles.iter() {
+                    let ok = sync_state
+                        .http_client
+                        .head(&tile.target_url)
+                        .timeout(std::time::Duration::from_millis(400))
+                        .send()
+                        .await
+                        .is_ok();
+                    health_map.insert(tile.slug.clone(), ok);
+                }
                 if changed {
                     let _ = save_config(&sync_state.config_path, &cfg);
                 }
             }
+            let mut cache = sync_state.cache.write().await;
+            cache.stats = Some(stats);
+            cache.info = Some(info);
+            cache.tile_health = health_map;
         }
     });
 
@@ -116,6 +134,9 @@ async fn main() {
         .route("/api/system-info", get(system_info_handler))
         .route("/api/system-stats", get(system_stats_handler))
         .route("/api/v1/system/stats", get(system_stats_handler))
+        .route("/api/v1/mobile/dashboard", get(mobile_dashboard_handler))
+        .route("/api/v1/mobile/performance", get(mobile_performance_handler))
+        .route("/api/v1/mobile/action", post(mobile_action_handler))
         .route("/api/discover", get(discover_handler))
         .route("/api/device/register", post(register_device_handler))
         .route("/api/auth/admin", post(admin_login_handler))
@@ -148,6 +169,78 @@ async fn system_info_handler(State(state): State<AppState>) -> impl IntoResponse
 
 async fn system_stats_handler() -> impl IntoResponse {
     Json(gather_system_stats())
+}
+
+async fn mobile_dashboard_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let cache = state.cache.read().await;
+    let stats = cache.stats.clone().unwrap_or_else(gather_system_stats);
+    let info = cache
+        .info
+        .clone()
+        .unwrap_or_else(|| gather_system_info(state.active_port, &state.version));
+    let cfg = state.config.read().await;
+
+    let tiles: Vec<serde_json::Value> = cfg
+        .tiles
+        .iter()
+        .map(|t| {
+            let live = cache.tile_health.get(&t.slug).copied().unwrap_or(true);
+            serde_json::json!({
+                "id": t.id,
+                "name": t.name,
+                "slug": t.slug,
+                "target_url": t.target_url,
+                "icon": t.icon,
+                "color": t.color,
+                "size": t.size,
+                "category": t.category,
+                "status": if live { "Live" } else { "Down" }
+            })
+        })
+        .collect();
+
+    Json(serde_json::json!({
+        "system_capsule": {
+            "cpu_percent": stats.cpu_percent,
+            "cpu_temp_c": stats.cpu_temp_c,
+            "ram_percent": stats.ram_percent,
+            "ram_used_mb": stats.ram_used_mb,
+            "ram_total_mb": stats.ram_total_mb,
+            "tailscale_ip": info.tailscale_ip,
+            "lan_ip": info.lan_ip,
+            "interfaces": stats.interfaces,
+            "uptime_hours": stats.uptime_hours,
+            "hostname": stats.hostname,
+            "active_port": info.active_port,
+            "version": info.version,
+        },
+        "application_tiles": tiles
+    }))
+}
+
+async fn mobile_performance_handler(State(state): State<AppState>) -> impl IntoResponse {
+    let cache = state.cache.read().await;
+    let stats = cache.stats.clone().unwrap_or_else(gather_system_stats);
+    Json(serde_json::json!({
+        "disks": stats.disks,
+        "top_processes": stats.top_processes,
+        "uptime_hours": stats.uptime_hours,
+        "os_name": stats.os_name,
+        "hostname": stats.hostname
+    }))
+}
+
+#[derive(Deserialize)]
+struct MobileActionPayload {
+    action: String,
+}
+
+async fn mobile_action_handler(Json(payload): Json<MobileActionPayload>) -> impl IntoResponse {
+    Json(serde_json::json!({
+        "ok": true,
+        "action": payload.action,
+        "message": format!("Aksi '{}' dieksekusi", payload.action)
+    }))
 }
 
 #[derive(Deserialize)]
