@@ -2,6 +2,10 @@
 
 **Bumiayu Hall** adalah *web app launcher* super ringan bergaya **Windows Mobile (Metro Tiles)** yang dibangun dengan **Rust (Axum)** dan **React + TypeScript + Tailwind CSS**. Dirancang khusus untuk berjalan mulus di perangkat ARM64 berdaya rendah seperti **Odroid C2** atau **STB HG680P**, serta menjaga pengalaman **PWA di iPhone (iOS Safari)** tetap *seamless* tanpa terlempar keluar ke browser saat membuka aplikasi di port berbeda.
 
+## 📱 Preview Tampilan
+
+![Preview Bumiayu Hall Mobile](docs/preview.svg)
+
 ---
 
 ## ✨ Fitur Utama
@@ -41,11 +45,16 @@ Contoh: `0.1.00` (Beta awal), `0.1.01` (Canary bugfix), `1.0.00` (Stable pertama
 
 ## 🚀 Cara Menjalankan
 
-### 1. Menggunakan Binary Release (Odroid C2 / STB HG680P / Linux / Windows)
-Unduh binary sesuai arsitektur dari halaman [GitHub Releases](https://github.com/faisalfa123/bumiayu-hall/releases):
-- `bumiayu-hall-aarch64-unknown-linux-gnu` (Odroid C2 / STB HG680P ARM64)
-- `bumiayu-hall-x86_64-unknown-linux-gnu` (Linux x64)
-- `bumiayu-hall-x86_64-pc-windows-msvc.exe` (Windows x64)
+### 1. Instalasi Otomatis di Linux / Odroid C2 / STB HG680P (`systemd`)
+Jalankan perintah berikut agar Bumiayu Hall terinstall di `/usr/local/bin/bumiayu-hall` dan aktif otomatis saat boot melalui `systemd`:
+```bash
+curl -fsSL https://raw.githubusercontent.com/faisalfa123/bumiayu-hall/main/deploy/install.sh | bash
+```
+
+Atau unduh binary sesuai arsitektur dari halaman [GitHub Releases](https://github.com/faisalfa123/bumiayu-hall/releases):
+- `bumiayu-hall-linux-arm64` (Odroid C2 / STB HG680P ARM64)
+- `bumiayu-hall-linux-amd64` (Linux x64)
+- `bumiayu-hall-windows-amd64.exe` (Windows x64)
 
 Jalankan langsung:
 ```bash

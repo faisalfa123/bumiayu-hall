@@ -1,7 +1,16 @@
-use serde::Serialize;
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
 use std::process::Command;
 use std::time::Duration;
+
+#[derive(Debug, Deserialize)]
+struct MastermindAppItem {
+    name: String,
+    slug: Option<String>,
+    port: u16,
+    icon: Option<String>,
+}
 
 #[derive(Debug, Serialize)]
 pub struct SystemInfo {
@@ -90,6 +99,45 @@ fn detect_web_servers() -> Vec<String> {
         }
     }
     found
+}
+
+pub async fn discover_all_apps(
+    client: &Client,
+    mastermind_api_url: &str,
+    active_port: u16,
+) -> Vec<DiscoveredApp> {
+    let mut apps = Vec::new();
+
+    if let Ok(resp) = client
+        .get(mastermind_api_url)
+        .timeout(Duration::from_millis(800))
+        .send()
+        .await
+    {
+        if let Ok(items) = resp.json::<Vec<MastermindAppItem>>().await {
+            for item in items {
+                let slug = item
+                    .slug
+                    .unwrap_or_else(|| item.name.to_lowercase().replace(' ', "-"));
+                apps.push(DiscoveredApp {
+                    name: item.name,
+                    slug,
+                    port: item.port,
+                    target_url: format!("http://127.0.0.1:{}", item.port),
+                    icon: item.icon.unwrap_or_else(|| "brain".to_string()),
+                    source: "Mastermind API".to_string(),
+                });
+            }
+        }
+    }
+
+    let local = discover_local_apps(active_port);
+    for l in local {
+        if !apps.iter().any(|a| a.port == l.port) {
+            apps.push(l);
+        }
+    }
+    apps
 }
 
 pub fn discover_local_apps(active_port: u16) -> Vec<DiscoveredApp> {

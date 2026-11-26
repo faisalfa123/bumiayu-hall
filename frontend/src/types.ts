@@ -14,6 +14,7 @@ export interface TileItem {
 export interface AppConfig {
   title: string;
   accent_color: string;
+  mastermind_api_url?: string;
   tiles: TileItem[];
 }
 

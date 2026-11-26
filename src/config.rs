@@ -6,7 +6,13 @@ use std::path::Path;
 pub struct AppConfig {
     pub title: String,
     pub accent_color: String,
+    #[serde(default = "default_mastermind_api")]
+    pub mastermind_api_url: String,
     pub tiles: Vec<TileItem>,
+}
+
+fn default_mastermind_api() -> String {
+    "http://127.0.0.1:3000/api/apps".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -34,6 +40,7 @@ impl Default for AppConfig {
         Self {
             title: "Bumiayu Hall".to_string(),
             accent_color: "#0078D7".to_string(),
+            mastermind_api_url: default_mastermind_api(),
             tiles: vec![
                 TileItem {
                     id: "mastermind-core".to_string(),

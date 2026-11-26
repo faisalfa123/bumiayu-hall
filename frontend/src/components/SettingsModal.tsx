@@ -98,10 +98,12 @@ export function SettingsModal({
     }
   };
 
-  const mastermindPrompt = `Tolong periksa project Mastermind agar bisa dibuka dengan lancar melalui reverse proxy Bumiayu Hall (path /p/mastermind/ di port ${systemInfo?.active_port ?? 1001}):
-1. Pastikan aplikasi tidak memblokir embedding/proxy dengan menghapus atau melonggarkan header X-Frame-Options dan Content-Security-Policy frame-ancestors.
-2. Gunakan relative path (atau base path dinamis) untuk aset JS/CSS dan API call agar tidak rusak saat diakses melalui subpath /p/mastermind/.
-3. Aktifkan CORS untuk origin ${window.location.origin} jika diperlukan.`;
+  const mastermindPrompt = `Tolong periksa project Mastermind agar bisa terintegrasi penuh dengan Bumiayu Hall (port ${systemInfo?.active_port ?? 1001}):
+1. Sediakan endpoint GET /api/apps yang mengembalikan JSON array daftar aplikasi terinstall:
+   [{ "name": "Nama App", "slug": "nama-app", "port": 8080, "icon": "globe" }]
+2. Pastikan aplikasi tidak memblokir proxy/embedding dengan menghapus atau melonggarkan header X-Frame-Options dan Content-Security-Policy frame-ancestors.
+3. Gunakan relative path untuk aset JS/CSS dan API call agar berjalan mulus di subpath /p/mastermind/.
+4. Aktifkan CORS untuk origin ${window.location.origin} jika diperlukan.`;
 
   const copyPrompt = () => {
     navigator.clipboard.writeText(mastermindPrompt);

@@ -19,7 +19,7 @@ use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 
 use config::{load_or_create_config, save_config, AppConfig};
-use discovery::{discover_local_apps, gather_system_info};
+use discovery::{discover_all_apps, gather_system_info};
 use proxy::{proxy_handler, proxy_root_handler, AppState};
 
 #[derive(RustEmbed)]
@@ -97,7 +97,11 @@ async fn system_info_handler(State(state): State<AppState>) -> impl IntoResponse
 }
 
 async fn discover_handler(State(state): State<AppState>) -> impl IntoResponse {
-    Json(discover_local_apps(state.active_port))
+    let api_url = {
+        let cfg = state.config.read().await;
+        cfg.mastermind_api_url.clone()
+    };
+    Json(discover_all_apps(&state.http_client, &api_url, state.active_port).await)
 }
 
 async fn get_config_handler(State(state): State<AppState>) -> impl IntoResponse {

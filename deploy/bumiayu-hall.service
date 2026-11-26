@@ -1,0 +1,15 @@
+[Unit]
+Description=Bumiayu Hall Web App Launcher
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/etc/bumiayu-hall
+ExecStart=/usr/local/bin/bumiayu-hall
+Restart=always
+RestartSec=3
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target
