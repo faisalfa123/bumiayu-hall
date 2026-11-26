@@ -1,3 +1,4 @@
+mod auth;
 mod config;
 mod discovery;
 mod proxy;
@@ -6,7 +7,7 @@ use axum::{
     extract::State,
     http::{header, StatusCode, Uri},
     response::{IntoResponse, Json},
-    routing::{any, get},
+    routing::{any, get, post},
     Router,
 };
 use reqwest::Client;
@@ -18,8 +19,9 @@ use tokio::net::TcpListener;
 use tokio::sync::RwLock;
 use tower_http::cors::CorsLayer;
 
+use auth::{generate_token, load_or_create_secrets, verify_password};
 use config::{load_or_create_config, save_config, AppConfig};
-use discovery::{discover_all_apps, gather_system_info};
+use discovery::{discover_all_apps, gather_system_info, gather_system_stats};
 use proxy::{proxy_handler, proxy_root_handler, AppState};
 
 #[derive(RustEmbed)]
@@ -51,7 +53,9 @@ async fn main() {
 
     let version = include_str!("../VERSION").trim().to_string();
     let config_path = "config.yaml".to_string();
+    let secrets_path = "secrets.json".to_string();
     let cfg = load_or_create_config(&config_path);
+    let secrets = load_or_create_secrets(&secrets_path);
 
     let (listener, active_port) = bind_available_port(1001).await;
     tracing::info!("Bumiayu Hall v{} listening on http://0.0.0.0:{}", version, active_port);
@@ -63,6 +67,7 @@ async fn main() {
 
     let state = AppState {
         config: Arc::new(RwLock::new(cfg)),
+        secrets: Arc::new(RwLock::new(secrets)),
         config_path,
         active_port,
         version,
@@ -72,7 +77,13 @@ async fn main() {
     let app = Router::new()
         .route("/api/health", get(health_handler))
         .route("/api/system-info", get(system_info_handler))
+        .route("/api/system-stats", get(system_stats_handler))
         .route("/api/discover", get(discover_handler))
+        .route("/api/device/register", post(register_device_handler))
+        .route("/api/auth/admin", post(admin_login_handler))
+        .route("/api/auth/root", post(root_verify_handler))
+        .route("/api/service/toggle", post(service_toggle_handler))
+        .route("/api/server/action", post(server_action_handler))
         .route("/api/config", get(get_config_handler).put(update_config_handler))
         .route("/api/config/yaml", get(get_yaml_handler).put(update_yaml_handler))
         .route("/p/:slug", any(proxy_root_handler))
@@ -94,6 +105,84 @@ async fn health_handler(State(state): State<AppState>) -> impl IntoResponse {
 
 async fn system_info_handler(State(state): State<AppState>) -> impl IntoResponse {
     Json(gather_system_info(state.active_port, &state.version))
+}
+
+async fn system_stats_handler() -> impl IntoResponse {
+    Json(gather_system_stats())
+}
+
+#[derive(Deserialize)]
+struct PasswordPayload {
+    password: String,
+}
+
+#[derive(Deserialize)]
+struct ServiceTogglePayload {
+    slug: String,
+    enable: bool,
+    admin_token: String,
+}
+
+#[derive(Deserialize)]
+struct ServerActionPayload {
+    action: String,
+    root_password: String,
+}
+
+async fn register_device_handler() -> impl IntoResponse {
+    Json(serde_json::json!({ "device_token": generate_token() }))
+}
+
+async fn admin_login_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<PasswordPayload>,
+) -> impl IntoResponse {
+    let sec = state.secrets.read().await;
+    if verify_password(&payload.password, &sec.admin_hash) {
+        Json(serde_json::json!({ "ok": true, "admin_token": sec.admin_session_token })).into_response()
+    } else {
+        (StatusCode::UNAUTHORIZED, Json(serde_json::json!({ "ok": false, "error": "Sandi Admin salah" }))).into_response()
+    }
+}
+
+async fn root_verify_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<PasswordPayload>,
+) -> impl IntoResponse {
+    let sec = state.secrets.read().await;
+    if verify_password(&payload.password, &sec.root_hash) {
+        Json(serde_json::json!({ "ok": true })).into_response()
+    } else {
+        (StatusCode::UNAUTHORIZED, Json(serde_json::json!({ "ok": false, "error": "Sandi Root salah" }))).into_response()
+    }
+}
+
+async fn service_toggle_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<ServiceTogglePayload>,
+) -> impl IntoResponse {
+    let sec = state.secrets.read().await;
+    if payload.admin_token != sec.admin_session_token {
+        return (StatusCode::UNAUTHORIZED, "Unauthorized").into_response();
+    }
+    let action = if payload.enable { "start" } else { "stop" };
+    let status = std::process::Command::new("systemctl")
+        .args([action, &payload.slug])
+        .status()
+        .map(|s| s.success())
+        .unwrap_or(false);
+    Json(serde_json::json!({ "ok": true, "slug": payload.slug, "enabled": payload.enable, "systemd_applied": status })).into_response()
+}
+
+async fn server_action_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<ServerActionPayload>,
+) -> impl IntoResponse {
+    let sec = state.secrets.read().await;
+    if !verify_password(&payload.root_password, &sec.root_hash) {
+        return (StatusCode::UNAUTHORIZED, "Sandi Root salah").into_response();
+    }
+    Json(serde_json::json!({ "ok": true, "action": payload.action, "message": format!("Aksi '{}' diterima", payload.action) })).into_response()
 }
 
 async fn discover_handler(State(state): State<AppState>) -> impl IntoResponse {

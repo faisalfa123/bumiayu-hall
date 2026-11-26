@@ -3,6 +3,34 @@ use serde::{Deserialize, Serialize};
 use std::net::TcpStream;
 use std::process::Command;
 use std::time::Duration;
+use sysinfo::System;
+
+#[derive(Debug, Serialize)]
+pub struct SystemStats {
+    pub cpu_percent: f32,
+    pub ram_used_mb: u64,
+    pub ram_total_mb: u64,
+    pub ram_percent: f32,
+    pub uptime_hours: u64,
+}
+
+pub fn gather_system_stats() -> SystemStats {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    let cpu_percent = sys.global_cpu_usage();
+    let ram_used_mb = sys.used_memory() / (1024 * 1024);
+    let ram_total_mb = (sys.total_memory() / (1024 * 1024)).max(1);
+    let ram_percent = (ram_used_mb as f32 / ram_total_mb as f32) * 100.0;
+    let uptime_hours = System::uptime() / 3600;
+
+    SystemStats {
+        cpu_percent,
+        ram_used_mb,
+        ram_total_mb,
+        ram_percent,
+        uptime_hours,
+    }
+}
 
 #[derive(Debug, Deserialize)]
 struct MastermindAppItem {

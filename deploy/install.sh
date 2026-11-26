@@ -13,8 +13,16 @@ sudo curl -fsSL "https://github.com/faisalfa123/bumiayu-hall/releases/latest/dow
 sudo chmod +x /usr/local/bin/bumiayu-hall
 
 sudo mkdir -p /etc/bumiayu-hall
-sudo curl -fsSL "https://raw.githubusercontent.com/faisalfa123/bumiayu-hall/main/deploy/bumiayu-hall.service" -o /etc/systemd/system/bumiayu-hall.service
 
+if [ ! -f /etc/bumiayu-hall/secrets.json ]; then
+  echo "=== Konfigurasi Keamanan Awal Bumiayu Hall ==="
+  echo "Password akan dienkripsi menggunakan Argon2 saat server pertama kali berjalan."
+  echo "Default awal jika belum diubah: Admin = admin123 | Root = root123"
+else
+  echo "secrets.json sudah ada — mempertahankan password Admin & Root yang tersimpan."
+fi
+
+sudo curl -fsSL "https://raw.githubusercontent.com/faisalfa123/bumiayu-hall/main/deploy/bumiayu-hall.service" -o /etc/systemd/system/bumiayu-hall.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now bumiayu-hall
 echo "Bumiayu Hall is now running on systemd!"

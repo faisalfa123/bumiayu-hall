@@ -8,11 +8,13 @@ use reqwest::Client;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
+use crate::auth::SecretsConfig;
 use crate::config::AppConfig;
 
 #[derive(Clone)]
 pub struct AppState {
     pub config: Arc<RwLock<AppConfig>>,
+    pub secrets: Arc<RwLock<SecretsConfig>>,
     pub config_path: String,
     pub active_port: u16,
     pub version: String,

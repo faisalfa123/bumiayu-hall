@@ -35,3 +35,11 @@ export interface DiscoveredApp {
   icon: string;
   source: string;
 }
+
+export interface SystemStats {
+  cpu_percent: number;
+  ram_used_mb: number;
+  ram_total_mb: number;
+  ram_percent: number;
+  uptime_hours: number;
+}

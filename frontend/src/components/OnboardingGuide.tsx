@@ -63,7 +63,16 @@ export function OnboardingGuide({ open, onClose }: OnboardingGuideProps) {
   const step = STEPS[stepIdx];
   const isLast = stepIdx === STEPS.length - 1;
 
-  const finish = () => {
+  const finish = async () => {
+    if (!localStorage.getItem('bumiayu_device_token')) {
+      try {
+        const res = await fetch('/api/device/register', { method: 'POST' });
+        const data = await res.json();
+        if (data.device_token) {
+          localStorage.setItem('bumiayu_device_token', data.device_token);
+        }
+      } catch {}
+    }
     localStorage.setItem('bumiayu_hall_onboarded', 'true');
     onClose();
   };
@@ -126,7 +135,7 @@ export function OnboardingGuide({ open, onClose }: OnboardingGuideProps) {
             >
               {isLast ? (
                 <>
-                  <Check className="w-3.5 h-3.5" /> Selesai
+                  <Check className="w-3.5 h-3.5" /> Mulai
                 </>
               ) : (
                 'Lanjut'

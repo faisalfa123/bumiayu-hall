@@ -9,6 +9,7 @@ interface SettingsModalProps {
   systemInfo: SystemInfo | null;
   onSaveConfig: (cfg: AppConfig) => Promise<void>;
   onReplayGuide: () => void;
+  onSwitchToUserMode?: () => void;
 }
 
 const PRESETS: Omit<TileItem, 'id'>[] = [
@@ -26,6 +27,7 @@ export function SettingsModal({
   systemInfo,
   onSaveConfig,
   onReplayGuide,
+  onSwitchToUserMode,
 }: SettingsModalProps) {
   const [tab, setTab] = useState<'presets' | 'yaml' | 'system'>('presets');
   const [yamlText, setYamlText] = useState('');
@@ -289,6 +291,14 @@ export function SettingsModal({
                 >
                   Ulangi Panduan (Tutorial)
                 </button>
+                {onSwitchToUserMode && (
+                  <button
+                    onClick={onSwitchToUserMode}
+                    className="ml-2 px-3 py-1.5 rounded bg-amber-600/80 hover:bg-amber-500 text-white font-medium"
+                  >
+                    Masuk ke User Mode
+                  </button>
+                )}
               </div>
 
               <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">
