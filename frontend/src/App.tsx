@@ -17,7 +17,7 @@ import {
   Wifi,
 } from 'lucide-react';
 import { AppConfig, SystemInfo, SystemStats } from './types';
-import { AppIcon } from './components/IconPicker';
+import { AppTileCard } from './components/AppTileCard';
 import { OnboardingGuide } from './components/OnboardingGuide';
 import { SettingsModal } from './components/SettingsModal';
 
@@ -77,7 +77,11 @@ export default function App() {
         .then((r) => r.json())
         .then(setStats)
         .catch(() => {});
-    }, 5000);
+      fetch('/api/config')
+        .then((r) => r.json())
+        .then(setConfig)
+        .catch(() => {});
+    }, 10000);
     return () => clearInterval(timer);
   }, []);
 
@@ -245,53 +249,19 @@ export default function App() {
             <div className="flex items-center justify-between text-xs font-semibold opacity-70">
               <span>Aplikasi ({filteredTiles.length})</span>
             </div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {filteredTiles.map((tile) => (
-                <div
+                <AppTileCard
                   key={tile.id}
-                  className={`animate-fade-up metro-tile p-3.5 rounded-2xl border ${cardClass} flex flex-col justify-between gap-3`}
-                >
-                  <div className="flex items-start justify-between">
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center text-white"
-                      style={{ backgroundColor: tile.color || '#0078D7' }}
-                    >
-                      <AppIcon name={tile.icon} className="w-5 h-5" />
-                    </div>
-                    {isAdmin && (
-                      <button
-                        onClick={() => {
-                          const next = !(serviceStates[tile.slug] ?? true);
-                          setServiceStates((prev) => ({ ...prev, [tile.slug]: next }));
-                          toggleService(tile.slug, next);
-                        }}
-                        className={`relative w-11 h-6 rounded-full transition-colors duration-300 ${
-                          (serviceStates[tile.slug] ?? true) ? 'bg-emerald-500' : 'bg-white/20'
-                        }`}
-                        title="On/Off Service"
-                        aria-label="Toggle Service"
-                      >
-                        <span
-                          className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-300 ${
-                            (serviceStates[tile.slug] ?? true) ? 'translate-x-5' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    )}
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-semibold truncate">{tile.name}</div>
-                    <div className="text-[11px] opacity-55 truncate">{tile.category}</div>
-                  </div>
-
-                  <a
-                    href={`/p/${tile.slug}/`}
-                    className="w-full py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold text-center transition"
-                  >
-                    Launch
-                  </a>
-                </div>
+                  tile={tile}
+                  isAdmin={isAdmin}
+                  isEnabled={serviceStates[tile.slug] ?? true}
+                  cardClass={cardClass}
+                  onToggleService={(slug, next) => {
+                    setServiceStates((prev) => ({ ...prev, [slug]: next }));
+                    toggleService(slug, next);
+                  }}
+                />
               ))}
             </div>
           </div>

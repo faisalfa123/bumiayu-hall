@@ -1,34 +1,21 @@
-import { useEffect, useState } from 'react';
-import { ArrowDown, ArrowUp, Check, X } from 'lucide-react';
+import { useState } from 'react';
+import { Check, Sparkles, X } from 'lucide-react';
 
-interface Step {
-  targetId: string;
-  title: string;
-  description: string;
-  position: 'top' | 'bottom';
-}
-
-const STEPS: Step[] = [
+const STEPS = [
   {
-    targetId: 'tile-grid-area',
-    title: '1. Tap Kotak Aplikasi (Metro Tiles)',
+    title: 'Selamat Datang di Bumiayu Hall',
     description:
-      'Setiap kotak membuka aplikasi langsung di tab yang sama lewat Reverse Proxy (/p/nama-app/) agar PWA iPhone tidak keluar ke Safari.',
-    position: 'top',
+      'Semua aplikasi server Anda disatukan dalam satu portal cepat. Ketuk kartu aplikasi untuk membukanya secara instan tanpa keluar dari PWA.',
   },
   {
-    targetId: 'system-status-bar',
-    title: '2. Info Port & Tailscale Otomatis',
+    title: 'Sinkronisasi Otomatis Mastermind',
     description:
-      'Di sini tampil port aktif (otomatis 1001+ jika bentrok) serta IP LAN / Tailscale yang sedang Anda gunakan.',
-    position: 'bottom',
+      'Aplikasi yang aktif di server Anda akan terdeteksi otomatis di latar belakang dan langsung muncul di dashboard.',
   },
   {
-    targetId: 'settings-btn',
-    title: '3. Pengaturan, Preset & Mastermind',
+    title: 'Performa & Pengaturan',
     description:
-      'Klik di sini untuk menambah app dengan preset klik-klik, edit YAML manual, atau menyalin prompt Mastermind. Anda juga bisa mengulang panduan ini kapan saja.',
-    position: 'bottom',
+      'Pantau kondisi CPU, RAM, Disk, dan jaringan melalui menu Performa, atau sesuaikan tampilan di Pengaturan.',
   },
 ];
 
@@ -39,24 +26,6 @@ interface OnboardingGuideProps {
 
 export function OnboardingGuide({ open, onClose }: OnboardingGuideProps) {
   const [stepIdx, setStepIdx] = useState(0);
-  const [rect, setRect] = useState<DOMRect | null>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    setStepIdx(0);
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) return;
-    const step = STEPS[stepIdx];
-    const el = document.getElementById(step.targetId);
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      setRect(el.getBoundingClientRect());
-    } else {
-      setRect(null);
-    }
-  }, [open, stepIdx]);
 
   if (!open) return null;
 
@@ -74,49 +43,40 @@ export function OnboardingGuide({ open, onClose }: OnboardingGuideProps) {
       } catch {}
     }
     localStorage.setItem('bumiayu_hall_onboarded', 'true');
+    setStepIdx(0);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-xs flex items-center justify-center p-4">
-      {rect && (
-        <div
-          className="fixed border-2 border-sky-400 rounded-md pointer-events-none shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] transition-all duration-300"
-          style={{
-            top: rect.top - 6,
-            left: rect.left - 6,
-            width: rect.width + 12,
-            height: rect.height + 12,
-          }}
-        />
-      )}
-
-      <div className="relative z-10 w-full max-w-md bg-[#16181d] border border-white/15 rounded-xl p-5 shadow-2xl text-white">
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2 text-sky-400 font-semibold text-sm">
-            {step.position === 'bottom' ? (
-              <ArrowUp className="w-5 h-5 animate-arrow" />
-            ) : (
-              <ArrowDown className="w-5 h-5 animate-arrow" />
-            )}
-            <span>Panduan Perangkat Baru ({stepIdx + 1}/{STEPS.length})</span>
+    <div
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-5 animate-fade-up"
+      onClick={finish}
+    >
+      <div
+        className="w-full max-w-sm bg-[#16181d]/95 border border-white/15 rounded-2xl p-6 shadow-2xl text-white"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2 text-sky-400 text-xs font-semibold">
+            <Sparkles className="w-4 h-4" />
+            <span>Panduan Singkat ({stepIdx + 1}/{STEPS.length})</span>
           </div>
           <button
             onClick={finish}
-            className="text-white/50 hover:text-white p-1"
-            aria-label="Tutup panduan"
+            className="text-white/50 hover:text-white p-1 transition"
+            aria-label="Lewati"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        <h3 className="text-lg font-bold mb-1.5">{step.title}</h3>
-        <p className="text-sm text-white/75 leading-relaxed mb-5">{step.description}</p>
+        <h3 className="text-lg font-bold mb-2">{step.title}</h3>
+        <p className="text-sm text-white/70 leading-relaxed mb-6">{step.description}</p>
 
         <div className="flex items-center justify-between">
           <button
             onClick={finish}
-            className="text-xs text-white/50 hover:text-white underline"
+            className="text-xs text-white/50 hover:text-white transition"
           >
             Lewati
           </button>
@@ -124,14 +84,14 @@ export function OnboardingGuide({ open, onClose }: OnboardingGuideProps) {
             {stepIdx > 0 && (
               <button
                 onClick={() => setStepIdx((i) => i - 1)}
-                className="px-3 py-1.5 text-xs rounded bg-white/10 hover:bg-white/20"
+                className="px-3 py-1.5 text-xs rounded-lg bg-white/10 hover:bg-white/20 transition"
               >
                 Kembali
               </button>
             )}
             <button
               onClick={() => (isLast ? finish() : setStepIdx((i) => i + 1))}
-              className="px-4 py-1.5 text-xs font-semibold rounded bg-sky-600 hover:bg-sky-500 flex items-center gap-1.5"
+              className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-sky-600 hover:bg-sky-500 flex items-center gap-1.5 transition active:scale-95"
             >
               {isLast ? (
                 <>

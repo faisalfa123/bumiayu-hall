@@ -74,6 +74,43 @@ async fn main() {
         http_client,
     };
 
+    // Background Mastermind Auto-Sync (every 30s)
+    let sync_state = state.clone();
+    tokio::spawn(async move {
+        let mut interval = tokio::time::interval(std::time::Duration::from_secs(30));
+        loop {
+            interval.tick().await;
+            let api_url = {
+                let cfg = sync_state.config.read().await;
+                cfg.mastermind_api_url.clone()
+            };
+            let discovered = discover_all_apps(&sync_state.http_client, &api_url, sync_state.active_port).await;
+            if !discovered.is_empty() {
+                let mut cfg = sync_state.config.write().await;
+                let mut changed = false;
+                for app in discovered {
+                    let exists = cfg.tiles.iter().any(|t| t.slug == app.slug || t.target_url == app.target_url);
+                    if !exists {
+                        cfg.tiles.push(config::TileItem {
+                            id: format!("{}-auto", app.slug),
+                            name: app.name,
+                            slug: app.slug,
+                            target_url: app.target_url,
+                            icon: app.icon,
+                            color: "#0078D7".to_string(),
+                            size: config::TileSize::Medium,
+                            category: app.source,
+                        });
+                        changed = true;
+                    }
+                }
+                if changed {
+                    let _ = save_config(&sync_state.config_path, &cfg);
+                }
+            }
+        }
+    });
+
     let app = Router::new()
         .route("/api/health", get(health_handler))
         .route("/api/system-info", get(system_info_handler))
