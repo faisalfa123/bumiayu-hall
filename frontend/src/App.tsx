@@ -248,7 +248,7 @@ export default function App() {
               {filteredTiles.map((tile) => (
                 <div
                   key={tile.id}
-                  className={`p-3.5 rounded-2xl border ${cardClass} flex flex-col justify-between gap-3`}
+                  className={`animate-fade-up metro-tile p-3.5 rounded-2xl border ${cardClass} flex flex-col justify-between gap-3`}
                 >
                   <div className="flex items-start justify-between">
                     <div

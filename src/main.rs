@@ -82,6 +82,7 @@ async fn main() {
         .route("/api/device/register", post(register_device_handler))
         .route("/api/auth/admin", post(admin_login_handler))
         .route("/api/auth/root", post(root_verify_handler))
+        .route("/api/auth/change-password", post(change_password_handler))
         .route("/api/service/toggle", post(service_toggle_handler))
         .route("/api/server/action", post(server_action_handler))
         .route("/api/config", get(get_config_handler).put(update_config_handler))
@@ -143,6 +144,40 @@ async fn admin_login_handler(
     } else {
         (StatusCode::UNAUTHORIZED, Json(serde_json::json!({ "ok": false, "error": "Sandi Admin salah" }))).into_response()
     }
+}
+
+#[derive(Deserialize)]
+struct ChangePasswordPayload {
+    role: String,
+    current_password: String,
+    new_password: String,
+}
+
+async fn change_password_handler(
+    State(state): State<AppState>,
+    Json(payload): Json<ChangePasswordPayload>,
+) -> impl IntoResponse {
+    let mut sec = state.secrets.write().await;
+    let valid = match payload.role.as_str() {
+        "admin" => verify_password(&payload.current_password, &sec.admin_hash),
+        "root" => verify_password(&payload.current_password, &sec.root_hash),
+        _ => return (StatusCode::BAD_REQUEST, "Role harus 'admin' atau 'root'").into_response(),
+    };
+    if !valid {
+        return (StatusCode::UNAUTHORIZED, "Sandi lama salah").into_response();
+    }
+    let Ok(new_hash) = auth::hash_password(&payload.new_password) else {
+        return (StatusCode::INTERNAL_SERVER_ERROR, "Gagal mengenkripsi sandi").into_response();
+    };
+    if payload.role == "admin" {
+        sec.admin_hash = new_hash;
+    } else {
+        sec.root_hash = new_hash;
+    }
+    if let Ok(json) = serde_json::to_string_pretty(&*sec) {
+        let _ = std::fs::write("secrets.json", json);
+    }
+    Json(serde_json::json!({ "ok": true, "message": format!("Sandi {} berhasil diubah", payload.role) })).into_response()
 }
 
 async fn root_verify_handler(

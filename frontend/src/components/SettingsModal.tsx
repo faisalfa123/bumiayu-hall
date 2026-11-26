@@ -35,6 +35,25 @@ export function SettingsModal({
   const [scanning, setScanning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [statusMsg, setStatusMsg] = useState('');
+  const [pwdRole, setPwdRole] = useState<'admin' | 'root'>('admin');
+  const [curPwd, setCurPwd] = useState('');
+  const [newPwd, setNewPwd] = useState('');
+
+  const handleChangePassword = async () => {
+    const res = await fetch('/api/auth/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: pwdRole, current_password: curPwd, new_password: newPwd }),
+    });
+    if (res.ok) {
+      setStatusMsg(`Sandi ${pwdRole} berhasil diubah!`);
+      setCurPwd('');
+      setNewPwd('');
+    } else {
+      setStatusMsg(await res.text());
+    }
+    setTimeout(() => setStatusMsg(''), 3000);
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -277,6 +296,44 @@ export function SettingsModal({
                       : 'Tidak ada (menggunakan built-in Rust server)'}
                   </span>
                 </div>
+              </div>
+
+              <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2.5">
+                <div className="font-semibold text-sm text-white">Ubah Sandi Admin & Root (Argon2)</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPwdRole('admin')}
+                    className={`px-3 py-1 rounded text-xs ${pwdRole === 'admin' ? 'bg-sky-600' : 'bg-white/10'}`}
+                  >
+                    Admin
+                  </button>
+                  <button
+                    onClick={() => setPwdRole('root')}
+                    className={`px-3 py-1 rounded text-xs ${pwdRole === 'root' ? 'bg-amber-600' : 'bg-white/10'}`}
+                  >
+                    Root
+                  </button>
+                </div>
+                <input
+                  type="password"
+                  value={curPwd}
+                  onChange={(e) => setCurPwd(e.target.value)}
+                  placeholder={`Sandi ${pwdRole} saat ini...`}
+                  className="w-full px-3 py-1.5 rounded bg-black/40 border border-white/15 text-xs"
+                />
+                <input
+                  type="password"
+                  value={newPwd}
+                  onChange={(e) => setNewPwd(e.target.value)}
+                  placeholder={`Sandi ${pwdRole} baru...`}
+                  className="w-full px-3 py-1.5 rounded bg-black/40 border border-white/15 text-xs"
+                />
+                <button
+                  onClick={handleChangePassword}
+                  className="px-3 py-1.5 rounded bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold"
+                >
+                  Simpan Sandi Baru
+                </button>
               </div>
 
               <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">
