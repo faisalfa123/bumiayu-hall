@@ -38,6 +38,8 @@ export default function App() {
   const [userName, setUserName] = useState(() => localStorage.getItem('bumiayu_user_name') || 'Pengguna');
   const [avatarUrl, setAvatarUrl] = useState(() => localStorage.getItem('bumiayu_avatar') || '');
   const [darkMode, setDarkMode] = useState(() => localStorage.getItem('bumiayu_theme') !== 'light');
+  const [themePreset, setThemePreset] = useState(() => localStorage.getItem('bumiayu_preset') || 'default');
+  const [now, setNow] = useState(() => new Date());
 
   const [activeTab, setActiveTab] = useState<BottomTab>('home');
   const [serviceStates, setServiceStates] = useState<Record<string, boolean>>({});
@@ -57,7 +59,7 @@ export default function App() {
     Promise.all([
       fetch('/api/config').then((r) => r.json()),
       fetch('/api/system-info').then((r) => r.json()),
-      fetch('/api/system-stats').then((r) => r.json()),
+      fetch('/api/v1/system/stats').then((r) => r.json()),
     ])
       .then(([cfg, sys, st]) => {
         setConfig(cfg);
@@ -73,7 +75,8 @@ export default function App() {
   useEffect(() => {
     loadData();
     const timer = setInterval(() => {
-      fetch('/api/system-stats')
+      setNow(new Date());
+      fetch('/api/v1/system/stats')
         .then((r) => r.json())
         .then(setStats)
         .catch(() => {});
@@ -150,8 +153,21 @@ export default function App() {
         t.category.toLowerCase().includes(query.toLowerCase())
     ) ?? [];
 
-  const bgClass = darkMode ? 'bg-[#0a0a0c] text-white' : 'bg-slate-100 text-slate-900';
-  const cardClass = darkMode ? 'bg-[#16181d] border-white/10' : 'bg-white border-slate-200 shadow-sm';
+  const presetBg =
+    themePreset === 'matcha'
+      ? 'bg-[#0d1a14] text-emerald-50'
+      : themePreset === 'hokkaido'
+      ? 'bg-slate-100 text-slate-900'
+      : themePreset === 'teak'
+      ? 'bg-[#1a130d] text-amber-50'
+      : darkMode
+      ? 'bg-[#0a0a0c] text-white'
+      : 'bg-slate-100 text-slate-900';
+  const bgClass = presetBg;
+  const cardClass =
+    themePreset === 'hokkaido' || !darkMode
+      ? 'bg-white border-slate-200 shadow-sm'
+      : 'bg-[#16181d] border-white/10';
 
   return (
     <div className={`min-h-screen ${bgClass} px-4 pt-3 pb-24 max-w-md mx-auto transition-colors`}>
@@ -191,37 +207,57 @@ export default function App() {
 
       {activeTab === 'home' && (
         <>
-          {/* System Status Summary Widget */}
-          <div className={`p-2.5 rounded-xl border ${cardClass} mb-3 flex items-center justify-between gap-3`}>
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="opacity-60">CPU</span>
-                <span className="font-mono font-semibold">{stats ? `${stats.cpu_percent.toFixed(0)}%` : '--%'}</span>
-              </div>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
-                <div
-                  className="h-full bg-sky-400 transition-all duration-300"
-                  style={{ width: `${Math.min(100, stats?.cpu_percent ?? 0)}%` }}
-                />
+          {/* System Status Capsule Bar */}
+          <div className="flex overflow-x-auto space-x-3 scrollbar-none pb-2 mb-3">
+            {/* Capsule 1: CPU */}
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-3 border border-white/10 min-w-[160px] shrink-0">
+              <div className="text-[10px] uppercase tracking-wider opacity-60">CPU</div>
+              <div className="flex items-baseline justify-between mt-1">
+                <span className="text-lg font-bold font-mono">{stats ? `${stats.cpu_percent.toFixed(0)}%` : '--%'}</span>
+                <span className="text-xs text-amber-400 font-mono">
+                  {stats?.cpu_temp_c ? `${stats.cpu_temp_c.toFixed(1)}°C` : 'N/A'}
+                </span>
               </div>
             </div>
 
-            <div className="flex-1 min-w-0">
-              <div className="flex justify-between text-[10px] mb-1">
-                <span className="opacity-60">RAM</span>
-                <span className="font-mono font-semibold">{stats ? `${stats.ram_percent.toFixed(0)}%` : '--%'}</span>
+            {/* Capsule 2: RAM */}
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-3 border border-white/10 min-w-[160px] shrink-0">
+              <div className="flex justify-between text-[10px] opacity-60 mb-1.5">
+                <span>RAM</span>
+                <span className="font-mono">{stats ? `${stats.ram_used_mb} MB` : '--'}</span>
               </div>
-              <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+              <div className="h-1 rounded-full bg-white/10 overflow-hidden">
                 <div
                   className="h-full bg-emerald-400 transition-all duration-300"
                   style={{ width: `${Math.min(100, stats?.ram_percent ?? 0)}%` }}
                 />
               </div>
+              <div className="text-[10px] opacity-50 mt-1 font-mono">
+                {stats ? `dari ${stats.ram_total_mb} MB` : '-'}
+              </div>
             </div>
 
-            <div className="flex items-center gap-1 pl-2 border-l border-white/10 shrink-0">
-              <Sun className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-bold">30°C</span>
+            {/* Capsule 3: Net */}
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-3 border border-white/10 min-w-[160px] shrink-0">
+              <div className="flex items-center justify-between text-[10px] opacity-60">
+                <span className="flex items-center gap-1"><Wifi className="w-3 h-3" /> Net</span>
+                <span className={`px-1.5 py-0.5 rounded text-[9px] font-semibold ${systemInfo?.tailscale_ip ? 'bg-emerald-500/20 text-emerald-400' : 'bg-white/10 text-white/60'}`}>
+                  {systemInfo?.tailscale_ip ? 'Tailscale Active' : 'Inactive'}
+                </span>
+              </div>
+              <div className="text-xs font-mono font-semibold mt-1.5 truncate">
+                {stats?.hostname ?? 'DietPi'}
+              </div>
+            </div>
+
+            {/* Capsule 4: Info (Clock & Date) */}
+            <div className="bg-white/5 backdrop-blur-md rounded-xl p-3 border border-white/10 min-w-[160px] shrink-0">
+              <div className="text-lg font-bold font-mono leading-tight">
+                {now.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+              </div>
+              <div className="text-[10px] opacity-60 mt-0.5">
+                {now.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
+              </div>
             </div>
           </div>
 
@@ -286,36 +322,51 @@ export default function App() {
 
       {activeTab === 'perf' && (
         <div className="space-y-3 animate-fade-up">
-          <h2 className="text-base font-bold">Performa & Kondisi Server</h2>
-          <div className="grid grid-cols-2 gap-3">
-            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
-              <div className="text-[11px] opacity-60">HW Info & Kondisi</div>
-              <div className="text-sm font-bold mt-1">{stats?.hostname ?? 'Server'}</div>
-              <div className="text-[11px] opacity-70">{stats?.os_name ?? 'Linux'} · Up {stats?.uptime_hours ?? 0}j</div>
+          <h2 className="text-base font-bold">System Analytics</h2>
+          <div className="grid grid-cols-1 gap-3">
+            {/* Card 1: Storage */}
+            <div className={`p-4 rounded-2xl border ${cardClass} space-y-2.5`}>
+              <div className="text-xs font-semibold opacity-75">Storage (Root & Eksternal)</div>
+              {stats?.disks?.map((d) => {
+                const pct = d.total_gb > 0 ? (d.used_gb / d.total_gb) * 100 : 0;
+                return (
+                  <div key={d.mount} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-mono">
+                      <span>{d.mount}</span>
+                      <span>{d.used_gb.toFixed(1)} / {d.total_gb.toFixed(0)} GB ({pct.toFixed(0)}%)</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-white/10 overflow-hidden">
+                      <div className="h-full bg-sky-400" style={{ width: `${Math.min(100, pct)}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
-              <div className="text-[11px] opacity-60">CPU & RAM</div>
-              <div className="text-sm font-bold mt-1">{stats ? `${stats.cpu_percent.toFixed(1)}% CPU` : '-'}</div>
-              <div className="text-[11px] opacity-70">
-                {stats ? `${stats.ram_used_mb}/${stats.ram_total_mb} MB (${stats.ram_percent.toFixed(0)}%)` : '-'}
-              </div>
-            </div>
-            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
-              <div className="text-[11px] opacity-60">WiFi / Ethernet</div>
-              <div className="text-xs font-mono mt-1 truncate">
-                {stats?.interfaces?.length ? stats.interfaces.join(', ') : 'eth0 / wlan0'}
-              </div>
-              <div className="text-[11px] text-emerald-400 mt-0.5">
-                {systemInfo?.tailscale_ip || systemInfo?.lan_ip || 'Connected'}
-              </div>
-            </div>
-            <div className={`p-3.5 rounded-2xl border ${cardClass}`}>
-              <div className="text-[11px] opacity-60">Mounting / Disk</div>
-              {stats?.disks?.slice(0, 2).map((d) => (
-                <div key={d.mount} className="text-[11px] font-mono mt-0.5 truncate">
-                  {d.mount}: {d.used_gb.toFixed(1)}/{d.total_gb.toFixed(0)} GB
+
+            {/* Card 2: Top 3 Processes */}
+            <div className={`p-4 rounded-2xl border ${cardClass} space-y-2`}>
+              <div className="text-xs font-semibold opacity-75">Top 3 Processes</div>
+              {stats?.top_processes?.map((p, idx) => (
+                <div key={`${p.name}-${idx}`} className="flex items-center justify-between text-xs py-1 border-b border-white/5 last:border-0">
+                  <span className="font-mono truncate max-w-[160px]">{p.name}</span>
+                  <span className="font-mono text-[11px] opacity-75">
+                    {p.memory_mb} MB · {p.cpu_percent.toFixed(1)}%
+                  </span>
                 </div>
               ))}
+            </div>
+
+            {/* Card 3: System Uptime & OS */}
+            <div className={`p-4 rounded-2xl border ${cardClass} flex items-center justify-between`}>
+              <div>
+                <div className="text-xs font-semibold opacity-75">System Uptime & OS</div>
+                <div className="text-sm font-bold mt-1">{stats?.os_name ?? 'DietPi / Linux'}</div>
+                <div className="text-[11px] opacity-60 font-mono">Hostname: {stats?.hostname ?? '-'}</div>
+              </div>
+              <div className="text-right">
+                <div className="text-lg font-bold font-mono text-emerald-400">{stats?.uptime_hours ?? 0}j</div>
+                <div className="text-[10px] opacity-60">Uptime</div>
+              </div>
             </div>
           </div>
 
@@ -546,6 +597,10 @@ export default function App() {
           onSaveConfig={handleSaveConfig}
           onReplayGuide={() => setGuideOpen(true)}
           onSwitchToUserMode={switchToUserMode}
+          onSelectTheme={(preset) => {
+            setThemePreset(preset);
+            localStorage.setItem('bumiayu_preset', preset);
+          }}
         />
       )}
     </div>

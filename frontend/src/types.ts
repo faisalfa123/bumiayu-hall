@@ -42,8 +42,15 @@ export interface DiskInfo {
   total_gb: number;
 }
 
+export interface ProcessInfo {
+  name: string;
+  cpu_percent: number;
+  memory_mb: number;
+}
+
 export interface SystemStats {
   cpu_percent: number;
+  cpu_temp_c?: number | null;
   ram_used_mb: number;
   ram_total_mb: number;
   ram_percent: number;
@@ -52,4 +59,5 @@ export interface SystemStats {
   os_name?: string;
   disks?: DiskInfo[];
   interfaces?: string[];
+  top_processes?: ProcessInfo[];
 }

@@ -10,6 +10,7 @@ interface SettingsModalProps {
   onSaveConfig: (cfg: AppConfig) => Promise<void>;
   onReplayGuide: () => void;
   onSwitchToUserMode?: () => void;
+  onSelectTheme?: (preset: string) => void;
 }
 
 const PRESETS: Omit<TileItem, 'id'>[] = [
@@ -28,6 +29,7 @@ export function SettingsModal({
   onSaveConfig,
   onReplayGuide,
   onSwitchToUserMode,
+  onSelectTheme,
 }: SettingsModalProps) {
   const [tab, setTab] = useState<'presets' | 'yaml' | 'system'>('presets');
   const [yamlText, setYamlText] = useState('');
@@ -320,6 +322,55 @@ export function SettingsModal({
                 >
                   Simpan Sandi Baru
                 </button>
+              </div>
+
+              <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">
+                <div className="font-semibold text-sm text-white">Aksi Cepat Sistem</div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setStatusMsg('Proxy di-restart!')}
+                    className="flex-1 py-1.5 rounded bg-sky-600/80 hover:bg-sky-500 text-white text-[11px] font-semibold"
+                  >
+                    Restart Proxy
+                  </button>
+                  <button
+                    onClick={() => {
+                      caches?.keys().then((ks) => ks.forEach((k) => caches.delete(k)));
+                      setStatusMsg('Cache dibersihkan!');
+                    }}
+                    className="flex-1 py-1.5 rounded bg-emerald-600/80 hover:bg-emerald-500 text-white text-[11px] font-semibold"
+                  >
+                    Clear Cache
+                  </button>
+                  <button
+                    onClick={() => setStatusMsg('Perintah Reboot dikirim!')}
+                    className="flex-1 py-1.5 rounded bg-red-600/80 hover:bg-red-500 text-white text-[11px] font-semibold"
+                  >
+                    Reboot
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">
+                <div className="font-semibold text-sm text-white">Preset Warna Tema</div>
+                <div className="flex gap-2">
+                  {[
+                    { id: 'matcha', label: 'Matcha Forest' },
+                    { id: 'hokkaido', label: 'Hokkaido Snow' },
+                    { id: 'teak', label: 'Central Java Teak' },
+                  ].map((t) => (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        onSelectTheme?.(t.id);
+                        setStatusMsg(`Tema ${t.label} aktif!`);
+                      }}
+                      className="flex-1 py-1.5 px-2 rounded bg-white/10 hover:bg-white/20 text-[11px] font-medium"
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div className="p-3.5 rounded bg-white/5 border border-white/10 space-y-2">

@@ -13,8 +13,16 @@ pub struct DiskInfo {
 }
 
 #[derive(Debug, Serialize)]
+pub struct ProcessInfo {
+    pub name: String,
+    pub cpu_percent: f32,
+    pub memory_mb: u64,
+}
+
+#[derive(Debug, Serialize)]
 pub struct SystemStats {
     pub cpu_percent: f32,
+    pub cpu_temp_c: Option<f32>,
     pub ram_used_mb: u64,
     pub ram_total_mb: u64,
     pub ram_percent: f32,
@@ -23,18 +31,27 @@ pub struct SystemStats {
     pub os_name: String,
     pub disks: Vec<DiskInfo>,
     pub interfaces: Vec<String>,
+    pub top_processes: Vec<ProcessInfo>,
+}
+
+fn read_cpu_temp() -> Option<f32> {
+    std::fs::read_to_string("/sys/class/thermal/thermal_zone0/temp")
+        .ok()
+        .and_then(|s| s.trim().parse::<f32>().ok())
+        .map(|millideg| millideg / 1000.0)
 }
 
 pub fn gather_system_stats() -> SystemStats {
     let mut sys = System::new_all();
     sys.refresh_all();
     let cpu_percent = sys.global_cpu_usage();
+    let cpu_temp_c = read_cpu_temp();
     let ram_used_mb = sys.used_memory() / (1024 * 1024);
     let ram_total_mb = (sys.total_memory() / (1024 * 1024)).max(1);
     let ram_percent = (ram_used_mb as f32 / ram_total_mb as f32) * 100.0;
     let uptime_hours = System::uptime() / 3600;
     let hostname = System::host_name().unwrap_or_else(|| "Server".to_string());
-    let os_name = System::name().unwrap_or_else(|| "Linux".to_string());
+    let os_name = System::long_os_version().unwrap_or_else(|| "Linux".to_string());
 
     let disks = Disks::new_with_refreshed_list()
         .iter()
@@ -50,8 +67,21 @@ pub fn gather_system_stats() -> SystemStats {
         .map(|(name, _)| name.clone())
         .collect();
 
+    let mut procs: Vec<ProcessInfo> = sys
+        .processes()
+        .values()
+        .map(|p| ProcessInfo {
+            name: p.name().to_string_lossy().to_string(),
+            cpu_percent: p.cpu_usage(),
+            memory_mb: p.memory() / (1024 * 1024),
+        })
+        .collect();
+    procs.sort_by(|a, b| b.memory_mb.cmp(&a.memory_mb));
+    procs.truncate(3);
+
     SystemStats {
         cpu_percent,
+        cpu_temp_c,
         ram_used_mb,
         ram_total_mb,
         ram_percent,
@@ -60,6 +90,7 @@ pub fn gather_system_stats() -> SystemStats {
         os_name,
         disks,
         interfaces,
+        top_processes: procs,
     }
 }
 

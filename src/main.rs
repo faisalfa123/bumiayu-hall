@@ -115,6 +115,7 @@ async fn main() {
         .route("/api/health", get(health_handler))
         .route("/api/system-info", get(system_info_handler))
         .route("/api/system-stats", get(system_stats_handler))
+        .route("/api/v1/system/stats", get(system_stats_handler))
         .route("/api/discover", get(discover_handler))
         .route("/api/device/register", post(register_device_handler))
         .route("/api/auth/admin", post(admin_login_handler))
